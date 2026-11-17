@@ -93,6 +93,36 @@ export async function generate(
       return result.text;
     } catch (e) {
       const status = (e as { status?: number }).status;
+      const providerMessage =
+        e instanceof Error
+          ? e.message
+          : String((e as { message?: string })?.message || "");
+      const category =
+        /API_KEY_INVALID|API key not valid|invalid.api.key/i.test(
+          providerMessage,
+        )
+          ? "invalid_api_key"
+          : /not found|not supported.*model|model.*not supported/i.test(
+                providerMessage,
+              )
+            ? "unavailable_model"
+            : /too many states|schema|INVALID_ARGUMENT/i.test(providerMessage)
+              ? "invalid_request"
+              : /location.*not supported/i.test(providerMessage)
+                ? "unsupported_location"
+                : "provider_failure";
+      // Log only a category and HTTP status, never provider messages, URLs, keys or tokens.
+      console.warn("Gemini provider request failed", { status, category });
+      if (category === "invalid_api_key")
+        throw new PublicError(
+          "The AI provider rejected this app’s API credential. Please contact the app owner.",
+          503,
+        );
+      if (category === "unavailable_model")
+        throw new PublicError(
+          "The selected AI model is unavailable. Please contact the app owner.",
+          503,
+        );
       if (attempt === 0 && status && [429, 500, 503].includes(status)) {
         await new Promise((r) => setTimeout(r, 800));
         continue;
