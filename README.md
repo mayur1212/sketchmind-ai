@@ -197,7 +197,7 @@ Source: https://github.com/mayur1212/sketchmind-ai
 
 Public application: https://sketchmind-ai-woad.vercel.app
 
-The homepage and health endpoint are publicly accessible. Live production AI verification is pending approval to configure the Gemini key on Vercel. For another account, follow these steps:
+The homepage and health endpoint are publicly accessible. The Gemini key was configured on Vercel with owner approval, but the provider currently rejects that credential (`API_KEY_INVALID`). A valid replacement key is required before the live demo is ready for assignment submission. For another account, follow these steps:
 
 1. Create a GitHub repository. Verify `.env.local` is ignored with `git check-ignore .env.local`.
 2. Review changes and commit the source:
@@ -233,7 +233,7 @@ Vercel account access is required for publication. Function duration is set to 1
 - [Official assignment](https://github.com/Braynix-Studios/ai-whiteboard-tutor-assignment)
 - [Submission form](https://docs.google.com/forms/d/e/1FAIpQLSdFJoTxMEuFZrCHTbEgv7bbg2uLf33SjP7n0w2qUONR4kMRcA/viewform)
 - Source repository: https://github.com/mayur1212/sketchmind-ai
-- Live demo: https://sketchmind-ai-woad.vercel.app (homepage/API health verified; production Gemini setup pending).
+- Live demo: https://sketchmind-ai-woad.vercel.app (homepage/API health and sample narration verified; live Gemini currently blocked by a rejected credential).
 
 ## Verification evidence
 

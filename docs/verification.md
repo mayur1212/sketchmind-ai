@@ -8,6 +8,6 @@
 - Layout regression: deeply nested valid input is converted into a bounded relationship diagram; all final coordinates pass validation.
 - No Gemini credential is included in source, screenshots, or client bundles.
 
-Exact narration duration depends on the chosen device voice. The automated native speech check verifies operating-system speech events, not subjective sound quality. The project owner must still listen to the deployed application on the intended browser and confirm intelligibility, volume, pause/resume, and the absence of overlapping voices.
+Exact narration duration depends on the chosen device voice. The automated native speech check verifies operating-system speech events, not subjective sound quality. The project owner confirmed that the public sample narration is clear and audible and that pause/resume works, without overlapping voices.
 
-Public deployment: https://sketchmind-ai-woad.vercel.app. The homepage and `/api/health` return HTTP 200 without login. A browser check also rendered the sample lesson and canvas. Production Gemini calls remain pending explicit approval to upload the key to Vercel. Human listening remains pending.
+Public deployment: https://sketchmind-ai-woad.vercel.app. The homepage and `/api/health` return HTTP 200 without login. A browser check also rendered the sample lesson and canvas. The owner explicitly approved storing the key as a sensitive Vercel environment variable in Production and Preview. Production Gemini requests then failed, and a fresh local request also returned `API_KEY_INVALID`. A valid replacement credential is required; the saved .env.local value visible to this workspace remains the earlier rejected credential. Human listening of the public sample was confirmed by the owner.
