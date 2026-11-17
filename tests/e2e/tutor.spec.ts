@@ -136,6 +136,7 @@ test("input errors, provider failure, and labeled sample", async ({
     "Gemini is unavailable",
   );
   if (info.project.name === "mobile") {
+    await page.getByRole("button", { name: "Lesson", exact: true }).click();
     await page.getByRole("button", { name: "Help", exact: true }).click();
     await page
       .getByRole("button", { name: "Explore the sample lesson", exact: true })
@@ -241,6 +242,7 @@ test("suggested follow-up keeps narration playing until an explicit visual expla
     .getByRole("button", { name: "Generate lesson", exact: true })
     .click();
   await page.getByRole("button", { name: "Play lesson", exact: true }).click();
+  await page.getByRole("button", { name: "Chat", exact: true }).click();
   await page
     .getByRole("button", { name: demo.suggestedQuestions[0], exact: true })
     .click();
@@ -354,6 +356,7 @@ test("failed visual explanation preserves the original lesson and can retry", as
     .getByRole("button", { name: "Generate lesson", exact: true })
     .click();
   await page.getByRole("button", { name: "Play lesson", exact: true }).click();
+  await page.getByRole("button", { name: "Chat", exact: true }).click();
   await page
     .getByRole("button", { name: demo.suggestedQuestions[0], exact: true })
     .click();
@@ -403,6 +406,7 @@ test("starting a new topic cancels a pending visual explanation and ignores its 
   await page
     .getByRole("button", { name: "Generate lesson", exact: true })
     .click();
+  await page.getByRole("button", { name: "Chat", exact: true }).click();
   await page
     .getByRole("button", { name: demo.suggestedQuestions[0], exact: true })
     .click();

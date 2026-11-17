@@ -11,6 +11,7 @@ import {
   HelpCircle,
   Loader2,
   MessageSquare,
+  Menu,
   Minus,
   MousePointer2,
   PanelLeftClose,
@@ -29,6 +30,7 @@ import {
 import { Lesson, lessonSchema, topicSchema } from "@/lib/lesson";
 import { demo } from "@/lib/demo";
 import { usePlayer } from "@/hooks/usePlayer";
+import { useCompactViewport } from "@/hooks/useCompactViewport";
 import type { Stroke } from "./Board";
 const Board = dynamic(() => import("./Board"), {
   ssr: false,
@@ -42,6 +44,54 @@ import type { ChatMessage as Message } from "@/lib/chat";
 import LessonPlayer from "./LessonPlayer";
 import Sidebar, { type Session } from "./Sidebar";
 export default function Tutor() {
+  const compact = useCompactViewport();
+  const [mobileDrawer, setMobileDrawer] = useState(false);
+  const mobileMenu = useRef<HTMLButtonElement>(null);
+  function closeMobileDrawer() {
+    setMobileDrawer(false);
+    mobileMenu.current?.focus();
+  }
+  useEffect(() => {
+    if (!mobileDrawer || !compact) return;
+    const drawer = document.getElementById("workspace-sidebar");
+    const focusable = () =>
+      Array.from(
+        drawer?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled),a[href],input,textarea,[tabindex="0"]',
+        ) || [],
+      );
+    focusable()[0]?.focus();
+    const keys = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileDrawer(false);
+        mobileMenu.current?.focus();
+      }
+      if (event.key === "Tab") {
+        const nodes = focusable();
+        if (!nodes.length) return;
+        const first = nodes[0],
+          last = nodes[nodes.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    const media = window.matchMedia("(max-width:1023px)");
+    const resize = () => {
+      if (!media.matches) setMobileDrawer(false);
+    };
+    document.addEventListener("keydown", keys);
+    media.addEventListener("change", resize);
+    return () => {
+      document.removeEventListener("keydown", keys);
+      media.removeEventListener("change", resize);
+    };
+  }, [mobileDrawer, compact]);
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [sample, setSample] = useState(false);
   const [sourceQuestion, setSourceQuestion] = useState<string>();
@@ -80,8 +130,40 @@ export default function Tutor() {
   useEffect(() => {
     if (!messages.length && !busy && !error) return;
     const scroller = bottom.current?.parentElement;
-    scroller?.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
-  }, [messages, busy, error]);
+    const last = compact
+      ? scroller
+          ?.querySelectorAll<HTMLElement>(".message")
+          .item(messages.length - 1)
+      : null;
+    const top =
+      last && scroller
+        ? scroller.scrollTop +
+          last.getBoundingClientRect().bottom -
+          scroller.getBoundingClientRect().top -
+          scroller.clientHeight +
+          16
+        : scroller?.scrollHeight;
+    if (scroller) scroller.scrollTo({ top, behavior: "smooth" });
+  }, [messages, busy, error, compact]);
+  useEffect(() => {
+    if (!compact) return;
+    const frame = requestAnimationFrame(() => {
+      const scroller = document.querySelector<HTMLElement>(".chat-content");
+      if (!scroller) return;
+      const last = scroller.querySelectorAll<HTMLElement>(".message");
+      const tail = last.item(last.length - 1);
+      const top =
+        tab === "tree" || !tail
+          ? 0
+          : scroller.scrollTop +
+            tail.getBoundingClientRect().bottom -
+            scroller.getBoundingClientRect().top -
+            scroller.clientHeight +
+            16;
+      scroller.scrollTo({ top, behavior: "instant" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [compact, tab]);
   useEffect(() => {
     if (lesson) conversations.current.set(lesson, messages);
   }, [lesson, messages]);
@@ -99,6 +181,10 @@ export default function Tutor() {
   }
   function select(session: Session) {
     cancel();
+    if (compact) {
+      setMobileDrawer(false);
+      setTab("tree");
+    }
     setLesson(session.lesson);
     setSample(session.sample);
     setSourceQuestion(session.sourceQuestion);
@@ -111,6 +197,10 @@ export default function Tutor() {
   }
   function fresh() {
     cancel();
+    if (compact) {
+      setMobileDrawer(false);
+      setTab("chat");
+    }
     setLesson(null);
     setSample(false);
     setSourceQuestion(undefined);
@@ -181,6 +271,7 @@ export default function Tutor() {
       if (creating) {
         const next = lessonSchema.parse(data);
         setLesson(next);
+        if (compact) setTab("tree");
         setSample(false);
         setSourceQuestion(undefined);
         setStrokes([]);
@@ -268,6 +359,7 @@ export default function Tutor() {
       // Only a successful, explicitly requested explanation replaces the board.
       // Chat requests and failed generations leave the current narration alone.
       player.reset();
+      if (compact) setTab("tree");
       setLesson(next);
       setSample(false);
       setSourceQuestion(context.question);
@@ -299,226 +391,274 @@ export default function Tutor() {
       }
     }
   }
+  const workspace = (
+    <section className="workspace">
+      <header className="workspace-header">
+        <div className="header-title">
+          {sourceQuestion && (
+            <div className="explanation-notice" role="status">
+              <span>New whiteboard explanation</span>
+              <small title={sourceQuestion}>{sourceQuestion}</small>
+            </div>
+          )}
+          {!sidebar && (
+            <button
+              className="icon-button"
+              aria-label="Show sidebar"
+              onClick={() => setSidebar(true)}
+            >
+              <PanelLeftClose size={18} />
+            </button>
+          )}
+        </div>
+        <div className="header-actions">
+          <button
+            className="icon-button"
+            aria-label="New lesson"
+            title="New lesson"
+            onClick={fresh}
+          >
+            <Plus size={17} />
+          </button>
+          <button
+            className="export-button"
+            onClick={() => exportBoard.current()}
+          >
+            <Download size={16} />
+            <span>Export</span>
+          </button>
+        </div>
+      </header>
+      <div className={`board-area ${lesson ? "has-lesson" : ""}`}>
+        <div className="board-top">
+          <button
+            aria-label="Drawing settings"
+            className={`icon-button board-menu ${palette ? "active" : ""}`}
+            onClick={() => setPalette(!palette)}
+          >
+            <Settings2 size={18} />
+          </button>
+          <div className="drawing-toolbar">
+            {[
+              { id: "select", Icon: MousePointer2, label: "Select" },
+              { id: "hand", Icon: Hand, label: "Pan view" },
+              { id: "pen", Icon: PenTool, label: "Draw" },
+            ].map(({ id, Icon, label }, i) => (
+              <button
+                title={label}
+                aria-label={label}
+                className={tool === id ? "active" : ""}
+                onClick={() => {
+                  setTool(id);
+                  if (id === "pen") setPalette(true);
+                }}
+                key={id}
+              >
+                <Icon size={18} />
+                <small>{i + 1}</small>
+              </button>
+            ))}
+            <span className="toolbar-divider" />
+            <button
+              aria-label="Undo drawing"
+              disabled={!strokes.length}
+              onClick={() => setStrokes((s) => s.slice(0, -1))}
+            >
+              <Undo2 size={18} />
+            </button>
+            <button
+              aria-label="Clear annotations"
+              disabled={!strokes.length}
+              onClick={() => setStrokes([])}
+            >
+              <Trash2 size={17} />
+            </button>
+          </div>
+          <span className="board-badge">
+            <span />
+            {sample
+              ? "Sample lesson"
+              : sourceQuestion
+                ? "Follow-up explanation"
+                : lesson
+                  ? "AI whiteboard"
+                  : "Ready to explore"}
+          </span>
+        </div>
+        {palette && (
+          <div className="palette">
+            <div className="palette-title">
+              Drawing style
+              <button
+                aria-label="Close drawing settings"
+                onClick={() => setPalette(false)}
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <label>Stroke</label>
+            <div className="swatches">
+              {["#ffffff", "#e05263", "#43a56b", "#368bc9", "#8b5cf6"].map(
+                (c) => (
+                  <button
+                    key={c}
+                    aria-label={`Use ${c} stroke`}
+                    onClick={() => {
+                      setColor(c);
+                      setTool("pen");
+                    }}
+                    style={{ background: c }}
+                    className={color === c ? "chosen" : ""}
+                  />
+                ),
+              )}
+            </div>
+            <label>Stroke width</label>
+            <div className="widths">
+              {[2, 4, 7].map((w) => (
+                <button
+                  className={width === w ? "active" : ""}
+                  key={w}
+                  aria-label={`${w} pixel stroke`}
+                  onClick={() => setWidth(w)}
+                >
+                  <span style={{ height: w }} />
+                </button>
+              ))}
+            </div>
+            <p>Draw over your lesson to make it yours.</p>
+          </div>
+        )}
+        <Board
+          key={`${lesson?.title || "empty"}:${player.index}`}
+          elements={step?.elements || []}
+          zoom={zoom}
+          tool={tool}
+          color={color}
+          width={width}
+          strokes={strokes}
+          onStrokes={setStrokes}
+          onExport={registerExport}
+        />
+        {!lesson && (
+          <div className="welcome-board minimal-welcome">
+            <p className="empty-state-label">AI-Powered Visual Learning</p>
+            <h2>What would you like to learn today?</h2>
+          </div>
+        )}
+        {busy && !lesson && (
+          <div className="generating-overlay">
+            <Loader2 className="spin" size={30} />
+            <h3>Connecting the dots…</h3>
+            <p>Your tutor is building a lesson just for you.</p>
+          </div>
+        )}
+        {step && (
+          <div className="step-heading">
+            <span>
+              STEP {String(player.index + 1).padStart(2, "0")} /{" "}
+              {String(lesson!.steps.length).padStart(2, "0")}
+            </span>
+            <h2>{step.title}</h2>
+          </div>
+        )}
+        <div className="board-bottom">
+          <div className="zoom-controls">
+            <button
+              aria-label="Zoom out"
+              disabled={zoom <= 0.6}
+              onClick={() => setZoom((z) => Math.max(0.6, z - 0.1))}
+            >
+              <Minus size={16} />
+            </button>
+            <button aria-label="Reset zoom" onClick={() => setZoom(1)}>
+              {Math.round(zoom * 100)}%
+            </button>
+            <button
+              aria-label="Zoom in"
+              disabled={zoom >= 1.8}
+              onClick={() => setZoom((z) => Math.min(1.8, z + 0.1))}
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+          <span className="canvas-caption">YOUR IDEAS, WITHOUT LIMITS</span>
+          {lesson && (
+            <span className="mobile-canvas-hint">
+              Scroll diagram · tap labels to read
+            </span>
+          )}
+          <button
+            className="icon-button"
+            aria-label="Help"
+            onClick={() => setModal("help")}
+          >
+            <HelpCircle size={18} />
+          </button>
+        </div>
+      </div>
+      {lesson && (
+        <LessonPlayer lesson={lesson} player={player} sample={sample} />
+      )}
+    </section>
+  );
   return (
-    <main className={`app-shell ${sidebar ? "" : "sidebar-hidden"}`}>
+    <main
+      className={`app-shell ${sidebar ? "" : "sidebar-hidden"} ${mobileDrawer ? "mobile-drawer-is-open" : ""}`}
+    >
+      <header className="mobile-app-header">
+        <button
+          ref={mobileMenu}
+          className="icon-button"
+          type="button"
+          aria-label="Open workspace menu"
+          aria-controls="workspace-sidebar"
+          aria-expanded={mobileDrawer}
+          onClick={() => {
+            topicInput.current?.blur();
+            setMobileDrawer(true);
+          }}
+        >
+          <Menu size={21} />
+        </button>
+        <span>
+          SketchMind <strong>AI</strong>
+        </span>
+        <button
+          className="icon-button"
+          type="button"
+          aria-label="New mobile lesson"
+          onClick={fresh}
+        >
+          <Plus size={21} />
+        </button>
+      </header>
+      <button
+        className="mobile-drawer-backdrop"
+        aria-label="Close workspace menu"
+        type="button"
+        onClick={closeMobileDrawer}
+        tabIndex={-1}
+      />
+
       <Sidebar
         lesson={lesson}
         sessions={sessions}
         select={select}
         fresh={fresh}
         openDemo={openDemo}
-        setSidebar={setSidebar}
-        setModal={setModal}
+        setSidebar={(value) => {
+          if (compact) closeMobileDrawer();
+          else setSidebar(value);
+        }}
+        setModal={(value) => {
+          if (compact) setMobileDrawer(false);
+          setModal(value);
+        }}
+        mobile={compact}
+        mobileOpen={mobileDrawer}
       />
-      <section className="workspace">
-        <header className="workspace-header">
-          <div className="header-title">
-            {sourceQuestion && (
-              <div className="explanation-notice" role="status">
-                <span>New whiteboard explanation</span>
-                <small title={sourceQuestion}>{sourceQuestion}</small>
-              </div>
-            )}
-            {!sidebar && (
-              <button
-                className="icon-button"
-                aria-label="Show sidebar"
-                onClick={() => setSidebar(true)}
-              >
-                <PanelLeftClose size={18} />
-              </button>
-            )}
-          </div>
-          <div className="header-actions">
-            <button
-              className="icon-button"
-              aria-label="New lesson"
-              title="New lesson"
-              onClick={fresh}
-            >
-              <Plus size={17} />
-            </button>
-            <button
-              className="export-button"
-              onClick={() => exportBoard.current()}
-            >
-              <Download size={16} />
-              <span>Export</span>
-            </button>
-          </div>
-        </header>
-        <div className={`board-area ${lesson ? "has-lesson" : ""}`}>
-          <div className="board-top">
-            <button
-              aria-label="Drawing settings"
-              className={`icon-button board-menu ${palette ? "active" : ""}`}
-              onClick={() => setPalette(!palette)}
-            >
-              <Settings2 size={18} />
-            </button>
-            <div className="drawing-toolbar">
-              {[
-                { id: "select", Icon: MousePointer2, label: "Select" },
-                { id: "hand", Icon: Hand, label: "Pan view" },
-                { id: "pen", Icon: PenTool, label: "Draw" },
-              ].map(({ id, Icon, label }, i) => (
-                <button
-                  title={label}
-                  aria-label={label}
-                  className={tool === id ? "active" : ""}
-                  onClick={() => {
-                    setTool(id);
-                    if (id === "pen") setPalette(true);
-                  }}
-                  key={id}
-                >
-                  <Icon size={18} />
-                  <small>{i + 1}</small>
-                </button>
-              ))}
-              <span className="toolbar-divider" />
-              <button
-                aria-label="Undo drawing"
-                disabled={!strokes.length}
-                onClick={() => setStrokes((s) => s.slice(0, -1))}
-              >
-                <Undo2 size={18} />
-              </button>
-              <button
-                aria-label="Clear annotations"
-                disabled={!strokes.length}
-                onClick={() => setStrokes([])}
-              >
-                <Trash2 size={17} />
-              </button>
-            </div>
-            <span className="board-badge">
-              <span />
-              {sample
-                ? "Sample lesson"
-                : sourceQuestion
-                  ? "Follow-up explanation"
-                  : lesson
-                    ? "AI whiteboard"
-                    : "Ready to explore"}
-            </span>
-          </div>
-          {palette && (
-            <div className="palette">
-              <div className="palette-title">
-                Drawing style
-                <button
-                  aria-label="Close drawing settings"
-                  onClick={() => setPalette(false)}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <label>Stroke</label>
-              <div className="swatches">
-                {["#ffffff", "#e05263", "#43a56b", "#368bc9", "#8b5cf6"].map(
-                  (c) => (
-                    <button
-                      key={c}
-                      aria-label={`Use ${c} stroke`}
-                      onClick={() => {
-                        setColor(c);
-                        setTool("pen");
-                      }}
-                      style={{ background: c }}
-                      className={color === c ? "chosen" : ""}
-                    />
-                  ),
-                )}
-              </div>
-              <label>Stroke width</label>
-              <div className="widths">
-                {[2, 4, 7].map((w) => (
-                  <button
-                    className={width === w ? "active" : ""}
-                    key={w}
-                    aria-label={`${w} pixel stroke`}
-                    onClick={() => setWidth(w)}
-                  >
-                    <span style={{ height: w }} />
-                  </button>
-                ))}
-              </div>
-              <p>Draw over your lesson to make it yours.</p>
-            </div>
-          )}
-          <Board
-            key={`${lesson?.title || "empty"}:${player.index}`}
-            elements={step?.elements || []}
-            zoom={zoom}
-            tool={tool}
-            color={color}
-            width={width}
-            strokes={strokes}
-            onStrokes={setStrokes}
-            onExport={registerExport}
-          />
-          {!lesson && (
-            <div className="welcome-board minimal-welcome">
-              <p className="empty-state-label">AI-Powered Visual Learning</p>
-              <h2>What would you like to learn today?</h2>
-            </div>
-          )}
-          {busy && !lesson && (
-            <div className="generating-overlay">
-              <Loader2 className="spin" size={30} />
-              <h3>Connecting the dots…</h3>
-              <p>Your tutor is building a lesson just for you.</p>
-            </div>
-          )}
-          {step && (
-            <div className="step-heading">
-              <span>
-                STEP {String(player.index + 1).padStart(2, "0")} /{" "}
-                {String(lesson!.steps.length).padStart(2, "0")}
-              </span>
-              <h2>{step.title}</h2>
-            </div>
-          )}
-          <div className="board-bottom">
-            <div className="zoom-controls">
-              <button
-                aria-label="Zoom out"
-                disabled={zoom <= 0.6}
-                onClick={() => setZoom((z) => Math.max(0.6, z - 0.1))}
-              >
-                <Minus size={16} />
-              </button>
-              <button aria-label="Reset zoom" onClick={() => setZoom(1)}>
-                {Math.round(zoom * 100)}%
-              </button>
-              <button
-                aria-label="Zoom in"
-                disabled={zoom >= 1.8}
-                onClick={() => setZoom((z) => Math.min(1.8, z + 0.1))}
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-            <span className="canvas-caption">YOUR IDEAS, WITHOUT LIMITS</span>
-            {lesson && (
-              <span className="mobile-canvas-hint">
-                Scroll diagram · tap labels to read
-              </span>
-            )}
-            <button
-              className="icon-button"
-              aria-label="Help"
-              onClick={() => setModal("help")}
-            >
-              <HelpCircle size={18} />
-            </button>
-          </div>
-        </div>
-        {lesson && (
-          <LessonPlayer lesson={lesson} player={player} sample={sample} />
-        )}
-      </section>
+      {!compact && workspace}
       <aside className="chat-panel">
         <div className="chat-header">
           <div className="chat-tabs">
@@ -541,7 +681,11 @@ export default function Tutor() {
             <Sparkles size={17} />
           </span>
         </div>
-        <div className="chat-content">
+        <div
+          className="chat-content"
+          data-active-panel={tab === "tree" ? "lesson" : "chat"}
+        >
+          {compact && tab === "tree" && workspace}
           {tab === "tree" ? (
             <div className="lesson-outline">
               <div className="mini-label">YOUR LEARNING PATH</div>
@@ -664,7 +808,12 @@ export default function Tutor() {
                   </span>
                   <h3>{lesson.title}</h3>
                   <p>{lesson.objective}</p>
-                  <button onClick={player.play}>
+                  <button
+                    onClick={() => {
+                      if (compact) setTab("tree");
+                      player.play();
+                    }}
+                  >
                     <Play size={15} />
                     Start learning
                     <ArrowRight size={15} />

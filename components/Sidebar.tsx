@@ -23,7 +23,11 @@ export default function Sidebar({
   openDemo,
   setSidebar,
   setModal,
+  mobile = false,
+  mobileOpen = false,
 }: {
+  mobile?: boolean;
+  mobileOpen?: boolean;
   lesson: Lesson | null;
   sessions: Session[];
   select: (s: Session) => void;
@@ -33,7 +37,15 @@ export default function Sidebar({
   setModal: (v: "settings") => void;
 }) {
   return (
-    <aside className="sidebar">
+    <aside
+      className="sidebar"
+      id="workspace-sidebar"
+      inert={mobile && !mobileOpen}
+      aria-hidden={mobile && !mobileOpen ? true : undefined}
+      role={mobile && mobileOpen ? "dialog" : undefined}
+      aria-modal={mobile && mobileOpen ? true : undefined}
+      aria-label={mobile ? "Workspace navigation" : undefined}
+    >
       <div className="brand">
         <span className="brand-mark">
           <GraduationCap size={22} />

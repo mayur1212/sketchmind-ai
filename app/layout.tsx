@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 const inter = Inter({
@@ -6,6 +6,12 @@ const inter = Inter({
   display: "swap",
   variable: "--font-inter",
 });
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+};
 export const metadata: Metadata = {
   title: "SketchMind AI — AI + Visual Whiteboard Learning",
   description:

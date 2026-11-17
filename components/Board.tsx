@@ -75,15 +75,38 @@ export default function Board({
         node.preventDefault(tool === "pen" || tool === "hand"),
       );
   }, [tool, diagram]);
-  const mobile = size.width < 650 && elements.length > 0;
-  // Small screens keep a readable diagram scale and scroll the canvas instead
-  // of shrinking every label to 6–8 CSS pixels.
-  const scale =
-    (mobile ? 0.9 : Math.min(size.width / 960, size.height / 600)) * zoom;
-  const stageWidth = Math.max(size.width, 960 * scale),
-    stageHeight = Math.max(size.height, 600 * scale);
-  const offsetX = Math.max(0, (stageWidth - 960 * scale) / 2),
-    offsetY = Math.max(0, (stageHeight - 600 * scale) / 2);
+  // Frame the visible content, rather than the model's mostly empty 960×600 page.
+  const bounds = useMemo(() => {
+    if (!diagram.length) return { x: 0, y: 0, width: 960, height: 600 };
+    const boxes = diagram.flatMap((e) => [
+      {
+        x: Math.min(e.x, e.x + e.width),
+        y: Math.min(e.y, e.y + e.height),
+        width: Math.abs(e.width),
+        height: Math.abs(e.height),
+      },
+      ...(e.text ? [labelBounds(e, diagram)] : []),
+    ]);
+    const x = Math.min(...boxes.map((b) => b.x)) - 24;
+    const y = Math.min(...boxes.map((b) => b.y)) - 24;
+    return {
+      x,
+      y,
+      width: Math.max(...boxes.map((b) => b.x + b.width)) - x + 24,
+      height: Math.max(...boxes.map((b) => b.y + b.height)) - y + 24,
+    };
+  }, [diagram]);
+  const fit = Math.min(
+    size.width / bounds.width,
+    size.height / bounds.height,
+    1.25,
+  );
+  // Keep labels readable on narrow screens; overflow stays within the board.
+  const scale = Math.max(0.65, fit) * zoom;
+  const stageWidth = Math.max(size.width, bounds.width * scale),
+    stageHeight = Math.max(size.height, bounds.height * scale);
+  const offsetX = (stageWidth - bounds.width * scale) / 2 - bounds.x * scale,
+    offsetY = (stageHeight - bounds.height * scale) / 2 - bounds.y * scale;
   function point() {
     const p = stage.current?.getPointerPosition();
     if (!p || !stage.current) return null;
@@ -92,7 +115,7 @@ export default function Board({
   }
   return (
     <div
-      className={`canvas-wrap tool-${tool} ${mobile ? "readable-canvas" : ""}`}
+      className={`canvas-wrap tool-${tool} readable-canvas`}
       ref={wrap}
       role="region"
       aria-label="Interactive whiteboard"
@@ -154,7 +177,6 @@ export default function Board({
         onTouchEnd={() => (drawing.current = false)}
       >
         <Layer>
-          <Rect width={960} height={600} fill="#13131f" />
           {[...diagram]
             .sort(
               (a, b) =>
