@@ -1,0 +1,27 @@
+{
+  "url": "https://sketchmind-ai-woad.vercel.app",
+  "errors": [],
+  "healthStatus": 200,
+  "lessonStatus": 200,
+  "lesson": {
+    "title": "Understanding the JavaScript Event Loop",
+    "steps": 6,
+    "words": 321
+  },
+  "nativeStarted": true,
+  "nativePaused": true,
+  "nativeResumed": true,
+  "seekCorrect": true,
+  "seekCanceled": true,
+  "restartCorrect": true,
+  "chatStatus": 200,
+  "answerVisible": true,
+  "originalBoardPreserved": true,
+  "visualStatus": 200,
+  "explanationNotice": true,
+  "visualWords": 312,
+  "previousLessonRestored": true,
+  "mobileOverflow": false,
+  "verifiedDate": "2026-11-17",
+  "humanListening": "Owner confirmed clear, audible public sample narration with working pause/resume and no overlapping voices."
+}

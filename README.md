@@ -77,7 +77,7 @@ GEMINI_MODEL=gemini-3.1-flash-lite
 
 Obtain a key in [Google AI Studio](https://aistudio.google.com/apikey). Enable the required API access and quota in its Google Cloud project. The model is configurable because model access and availability vary. This implementation was verified with `gemini-3.1-flash-lite`; another listed model returned 503 during verification. See [Google's model documentation](https://ai.google.dev/gemini-api/docs/models) and [structured output documentation](https://ai.google.dev/gemini-api/docs/structured-output).
 
-A provided credential has already been stored locally for this workspace; do not replace `.env.local` unless configuring a new checkout. Never commit it or use `NEXT_PUBLIC_` for secrets.
+Use your own valid Gemini credential for local development. A key configured only in Vercel must also be configured separately in local `.env.local` when running locally. Never commit credentials or use `NEXT_PUBLIC_` for secrets.
 
 ```sh
 npm run dev
@@ -197,7 +197,7 @@ Source: https://github.com/mayur1212/sketchmind-ai
 
 Public application: https://sketchmind-ai-woad.vercel.app
 
-The homepage and health endpoint are publicly accessible. The Gemini key was configured on Vercel with owner approval, but the provider currently rejects that credential (`API_KEY_INVALID`). A valid replacement key is required before the live demo is ready for assignment submission. For another account, follow these steps:
+The homepage and health endpoint are publicly accessible. Production Gemini generation, contextual chat, optional visual follow-ups, native narration controls, and workspace history have been verified on the public URL. The owner updated the provider credential during setup; the final production checks succeeded. For another account, follow these steps:
 
 1. Create a GitHub repository. Verify `.env.local` is ignored with `git check-ignore .env.local`.
 2. Review changes and commit the source:
@@ -233,7 +233,7 @@ Vercel account access is required for publication. Function duration is set to 1
 - [Official assignment](https://github.com/Braynix-Studios/ai-whiteboard-tutor-assignment)
 - [Submission form](https://docs.google.com/forms/d/e/1FAIpQLSdFJoTxMEuFZrCHTbEgv7bbg2uLf33SjP7n0w2qUONR4kMRcA/viewform)
 - Source repository: https://github.com/mayur1212/sketchmind-ai
-- Live demo: https://sketchmind-ai-woad.vercel.app (homepage/API health and sample narration verified; live Gemini currently blocked by a rejected credential).
+- Live demo: https://sketchmind-ai-woad.vercel.app (live Gemini lesson/chat/visual follow-up and native playback controls verified).
 
 ## Verification evidence
 
