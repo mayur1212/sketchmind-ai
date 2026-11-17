@@ -682,7 +682,7 @@ export default function Tutor() {
           </span>
         </div>
         <div
-          className="chat-content"
+          className={`chat-content ${compact && tab === "chat" && !lesson && messages.length === 0 ? "has-compact-welcome" : ""}`}
           data-active-panel={tab === "tree" ? "lesson" : "chat"}
         >
           {compact && tab === "tree" && workspace}
@@ -719,82 +719,92 @@ export default function Tutor() {
             </div>
           ) : (
             <>
-              <div className="tutor-intro">
-                <span className="intro-icon">
-                  <Sparkles size={21} />
-                </span>
-                <span>
-                  AI + Visual Whiteboard Learning
-                  <small>A little guidance. A lot of discovery.</small>
-                </span>
-              </div>
-              <div className="welcome-message">
-                <h2>Curiosity looks good on you.</h2>
-                <p>
-                  Hi! I’m your AI tutor. What would you like to learn today?
-                </p>
-                <p className="muted">
-                  Pick a topic. I’ll break it down with visuals and a voice to
-                  guide you.
-                </p>
-              </div>
-              {!lesson && messages.length === 0 && (
+              {compact && !lesson && messages.length === 0 && (
+                <div className="compact-welcome">
+                  <p>AI-Powered Visual Learning</p>
+                  <h2>What would you like to learn today?</h2>
+                </div>
+              )}
+              {!compact && (
                 <>
-                  <div className="suggestion-label">
-                    NEED A LITTLE INSPIRATION?
-                  </div>
-                  <div className="suggestions">
-                    {[
-                      {
-                        topic: "JavaScript Closures",
-                        sub: "A function with a memory",
-                        icon: "{ }",
-                      },
-                      {
-                        topic: "React Hooks",
-                        sub: "State, without the mystery",
-                        icon: "↻",
-                      },
-                      {
-                        topic: "Event Loop",
-                        sub: "What happens behind the scenes",
-                        icon: "⌘",
-                      },
-                      {
-                        topic: "Solar System",
-                        sub: "A little perspective",
-                        icon: "☀",
-                      },
-                    ].map((t) => (
-                      <button
-                        disabled={busy}
-                        key={t.topic}
-                        onClick={() => submit(t.topic, true)}
-                      >
-                        <span className="topic-icon">{t.icon}</span>
-                        <span>
-                          {t.topic}
-                          <small>{t.sub}</small>
-                        </span>
-                        <ArrowRight size={15} />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="how-card">
-                    <span>
-                      <Volume2 size={18} />
-                      More than an answer.
+                  <div className="tutor-intro">
+                    <span className="intro-icon">
+                      <Sparkles size={21} />
                     </span>
-                    <p>
-                      A short visual lesson, spoken step by step.
-                      <br />
-                      Pause, explore, and ask as you go.
-                    </p>
-                    <div>
-                      <span>~2 MIN LESSONS</span>
-                      <span>YOUR PACE</span>
-                    </div>
+                    <span>
+                      AI + Visual Whiteboard Learning
+                      <small>A little guidance. A lot of discovery.</small>
+                    </span>
                   </div>
+                  <div className="welcome-message">
+                    <h2>Curiosity looks good on you.</h2>
+                    <p>
+                      Hi! I’m your AI tutor. What would you like to learn today?
+                    </p>
+                    <p className="muted">
+                      Pick a topic. I’ll break it down with visuals and a voice
+                      to guide you.
+                    </p>
+                  </div>
+                  {!lesson && messages.length === 0 && (
+                    <>
+                      <div className="suggestion-label">
+                        NEED A LITTLE INSPIRATION?
+                      </div>
+                      <div className="suggestions">
+                        {[
+                          {
+                            topic: "JavaScript Closures",
+                            sub: "A function with a memory",
+                            icon: "{ }",
+                          },
+                          {
+                            topic: "React Hooks",
+                            sub: "State, without the mystery",
+                            icon: "↻",
+                          },
+                          {
+                            topic: "Event Loop",
+                            sub: "What happens behind the scenes",
+                            icon: "⌘",
+                          },
+                          {
+                            topic: "Solar System",
+                            sub: "A little perspective",
+                            icon: "☀",
+                          },
+                        ].map((t) => (
+                          <button
+                            disabled={busy}
+                            key={t.topic}
+                            onClick={() => submit(t.topic, true)}
+                          >
+                            <span className="topic-icon">{t.icon}</span>
+                            <span>
+                              {t.topic}
+                              <small>{t.sub}</small>
+                            </span>
+                            <ArrowRight size={15} />
+                          </button>
+                        ))}
+                      </div>
+                      <div className="how-card">
+                        <span>
+                          <Volume2 size={18} />
+                          More than an answer.
+                        </span>
+                        <p>
+                          A short visual lesson, spoken step by step.
+                          <br />
+                          Pause, explore, and ask as you go.
+                        </p>
+                        <div>
+                          <span>~2 MIN LESSONS</span>
+                          <span>YOUR PACE</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
               {lesson && (

@@ -2425,3 +2425,44 @@ button:hover {
     min-height: 240px;
   }
 }
+
+@media (max-width: 1023px) {
+  .chat-content.has-compact-welcome {
+    display: flex;
+    flex-direction: column;
+  }
+  .compact-welcome {
+    margin-block: auto;
+    padding: 32px 12px;
+    text-align: center;
+  }
+  .compact-welcome p {
+    margin-bottom: 12px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .chat-panel .compact-welcome h2 {
+    max-width: 520px;
+    margin-inline: auto;
+    color: var(--ink);
+    font-size: clamp(26px, 4vw, 36px);
+    line-height: 1.25;
+    letter-spacing: -0.5px;
+    text-wrap: balance;
+  }
+}
+
+/* Canvas dimensions must follow the viewport, never its generated stage size. */
+.board-area.has-lesson .canvas-wrap {
+  contain: size layout;
+}
+@media (max-width: 1023px) {
+  .chat-content .board-area.has-lesson {
+    flex: 0 0 auto;
+    height: clamp(30rem, 70dvh, 42rem);
+  }
+  .chat-content[data-active-panel="lesson"] {
+    display: block;
+  }
+}
