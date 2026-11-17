@@ -10,4 +10,4 @@
 
 Exact narration duration depends on the chosen device voice. The automated native speech check verifies operating-system speech events, not subjective sound quality. The project owner must still listen to the deployed application on the intended browser and confirm intelligibility, volume, pause/resume, and the absence of overlapping voices.
 
-Production URL checks will be recorded after deployment. No unverified deployment or human listening result is claimed here.
+Public deployment: https://sketchmind-ai-woad.vercel.app. The homepage and `/api/health` return HTTP 200 without login. A browser check also rendered the sample lesson and canvas. Production Gemini calls remain pending explicit approval to upload the key to Vercel. Human listening remains pending.

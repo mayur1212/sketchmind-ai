@@ -195,7 +195,9 @@ Verification completed during implementation: 33 unit/API/speech/layout/quality 
 
 Source: https://github.com/mayur1212/sketchmind-ai
 
-Deployment status and the verified production URL are recorded below after publication. For another account, follow these steps:
+Public application: https://sketchmind-ai-woad.vercel.app
+
+The homepage and health endpoint are publicly accessible. Live production AI verification is pending approval to configure the Gemini key on Vercel. For another account, follow these steps:
 
 1. Create a GitHub repository. Verify `.env.local` is ignored with `git check-ignore .env.local`.
 2. Review changes and commit the source:
@@ -231,7 +233,7 @@ Vercel account access is required for publication. Function duration is set to 1
 - [Official assignment](https://github.com/Braynix-Studios/ai-whiteboard-tutor-assignment)
 - [Submission form](https://docs.google.com/forms/d/e/1FAIpQLSdFJoTxMEuFZrCHTbEgv7bbg2uLf33SjP7n0w2qUONR4kMRcA/viewform)
 - Source repository: https://github.com/mayur1212/sketchmind-ai
-- Live demo: deployment in progress; the verified production URL will be added after verification.
+- Live demo: https://sketchmind-ai-woad.vercel.app (homepage/API health verified; production Gemini setup pending).
 
 ## Verification evidence
 
